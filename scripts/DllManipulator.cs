@@ -89,13 +89,11 @@ namespace UnityNativeTool.Internal
                     {
                         if (method.IsDefined(typeof(DllImportAttribute)))
                         {
-                            if (method.IsDefined(typeof(DisableMockingAttribute)))
-                                continue;
+                            var dllImportAttr = method.GetCustomAttribute<DllImportAttribute>();
+                            var dllName = dllImportAttr.Value;
 
-                            if (method.DeclaringType.IsDefined(typeof(DisableMockingAttribute)))
-                                continue;
-
-                            if (Options.mockAllNativeFunctions || method.IsDefined(typeof(MockNativeDeclarationAttribute)) || method.DeclaringType.IsDefined(typeof(MockNativeDeclarationsAttribute)))
+                            var index = options.dllPaths.FindIndex(x => Path.GetFileNameWithoutExtension(x) == dllName);
+                            if (Options.mockAllNativeFunctions || index != -1)
                                 MockNativeFunction(method);
                         }
                         else
@@ -199,7 +197,7 @@ namespace UnityNativeTool.Internal
                         // if (!success)
                         //     Debug.LogWarning($"Error while unloading DLL \"{dll.name}\" at path \"{dll.path}\"");
 
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+#if UNITY_EDITOR_WIN
                         // Reduce the reference count to 0 and the system will release the DLL after a short time
                         var maxTime = UnityEditor.EditorApplication.timeSinceStartup + 2;
                         while(SysUnloadDll(dll.handle))
@@ -294,7 +292,7 @@ namespace UnityNativeTool.Internal
                 }
                 else
                 {
-                    dllPath = ApplyDirectoryPathMacros(Options.dllPathPattern).Replace(DLL_PATH_PATTERN_DLL_NAME_MACRO, dllName);
+                    dllPath = ApplyDirectoryPathMacros(Options.dllPaths.Find(x => Path.GetFileNameWithoutExtension(x) == dllName) ?? string.Empty);
                     dll = new NativeDll(dllName, dllPath);
                     _dlls.Add(dllName, dll);
                 }
@@ -738,7 +736,7 @@ namespace UnityNativeTool.Internal
     [Serializable]
     public class DllManipulatorOptions
     {
-        public string dllPathPattern;
+        public List<string> dllPaths;
         public List<string> assemblyNames; // empty means only default assemblies
         public DllLoadingMode loadingMode;
         public PosixDlopenFlags posixDlopenFlags;
@@ -752,7 +750,7 @@ namespace UnityNativeTool.Internal
 
         public DllManipulatorOptions CloneTo(DllManipulatorOptions other)
         {
-            other.dllPathPattern = dllPathPattern;
+            other.dllPaths = dllPaths;
             other.assemblyNames = assemblyNames.Select(item => (string)item.Clone()).ToList();
             other.loadingMode = loadingMode;
             other.posixDlopenFlags = posixDlopenFlags;
@@ -769,7 +767,7 @@ namespace UnityNativeTool.Internal
 
         public bool Equals(DllManipulatorOptions other)
         {
-            return other.dllPathPattern == dllPathPattern && other.assemblyNames.SequenceEqual(assemblyNames) &&
+            return other.dllPaths == dllPaths && other.assemblyNames.SequenceEqual(assemblyNames) &&
                    other.loadingMode == loadingMode && other.posixDlopenFlags == posixDlopenFlags &&
                    other.threadSafe == threadSafe && other.enableCrashLogs == enableCrashLogs &&
                    other.crashLogsDir == crashLogsDir && other.crashLogsStackTrace == crashLogsStackTrace &&

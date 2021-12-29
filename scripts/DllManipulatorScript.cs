@@ -19,16 +19,7 @@ namespace UnityNativeTool
         public TimeSpan? InitializationTime { get; private set; } = null;
         public DllManipulatorOptions Options = new DllManipulatorOptions()
         {
-            dllPathPattern =
-#if UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-            "{assets}/Plugins/__{name}.so",
-#elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            "{assets}/Plugins/__{name}.dylib",
-#elif UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            "{assets}/Plugins/__{name}.dll",
-#else
-            "",
-#endif
+            dllPaths = new List<string>(),
             assemblyNames = new List<string>(),
             loadingMode = DllLoadingMode.Lazy,
             posixDlopenFlags = PosixDlopenFlags.Lazy,

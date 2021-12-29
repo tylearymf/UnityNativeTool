@@ -322,8 +322,15 @@ namespace UnityNativeTool.Internal
             EditorGUILayout.Separator();
             EditorGUILayout.LabelField("Native Side", EditorStyles.boldLabel);
 
-            options.dllPathPattern = EditorGUILayout.TextField(DLL_PATH_PATTERN_GUI_CONTENT, options.dllPathPattern);
-            
+            EditorGUILayout.LabelField(DLL_PATH_PATTERN_GUI_CONTENT);
+            DrawList(options.dllPaths, i =>
+            {
+                var result = EditorGUILayout.TextField(options.dllPaths[i]);
+                return result;
+            }, true, () => "", () =>
+            {
+            });
+
             options.loadingMode = (DllLoadingMode)EditorGUILayout.EnumPopup(DLL_LOADING_MODE_GUI_CONTENT, options.loadingMode);
 
 #if UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
